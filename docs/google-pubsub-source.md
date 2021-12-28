@@ -5,7 +5,7 @@ alias: Google Cloud Pub/Sub Source Connector
 
 The [Google Cloud Pub/Sub](https://cloud.google.com/pubsub) source connector feeds data from Google Cloud Pub/Sub topics and writes data to Pulsar topics.
 
-![](/docs/pubsub-source.png)
+![](/docs/google-pubsub-source.png)
 
 # How to get
 
