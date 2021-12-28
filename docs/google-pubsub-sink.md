@@ -5,7 +5,7 @@ alias: Google Cloud Pub/Sub Sink Connector
 
 The [Google Cloud Pub/Sub](https://cloud.google.com/pubsub) sink connector pulls data from Pulsar topics and persists data to Google Cloud Pub/Sub topics.
 
-![](/docs/pubsub-sink.png)
+![](/docs/google-pubsub-sink.png)
 
 # How to get
 
