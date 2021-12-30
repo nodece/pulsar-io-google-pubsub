@@ -50,7 +50,7 @@ You can pull the Google Cloud Pub/Sub sink connector Docker image from the [Dock
 
 :::
 
-# How to configure 
+# How to configure
 
 Before using the Google Cloud Pub/Sub sink connector, you need to configure it. This table lists the properties and the descriptions.
 
@@ -167,13 +167,14 @@ spec:
 
 You can use the Google Cloud Pub/Sub sink connector with Function Worker or Function Mesh.
 
-::: tabs
-
-@@@ Function Worker
+## Work with Function Worker
 
 You can use the Google Cloud Pub/Sub sink connector as a non built-in connector or a built-in connector.
 
-## Use it as non built-in connector
+::: tabs
+
+@@@ Use it as non built-in connector
+
 
 If you already have a Pulsar cluster, you can use the Google Cloud Pub/Sub sink connector as a non built-in connector directly.
 
@@ -184,7 +185,9 @@ PULSAR_HOME/bin/pulsar-admin sinks create \
 --sink-config-file <google-pubsub-sink-config.yaml>
 ```
 
-## Use it as built-in connector
+@@@
+
+@@@ Use it as built-in connector
 
 You can make the Google Cloud Pub/Sub sink connector as a built-in connector and use it on a standalone cluster or an on-premises cluster.
 
@@ -269,10 +272,13 @@ This example explains how to create a Google Cloud Pub/Sub sink connector in an 
 
 @@@
 
-@@@ Function Mesh
+:::
+
+## Work with Function Mesh
 
 This example describes how to create a Google Cloud Pub/Sub sink connector for a Kuberbetes cluster using Function Mesh.
-## Prerequisites
+
+### Prerequisites
 
 - Create and connect to a [Kubernetes cluster](https://kubernetes.io/).
 
@@ -282,7 +288,7 @@ This example describes how to create a Google Cloud Pub/Sub sink connector for a
 
 - Prepare Google Cloud PubSub service. For details, see [Getting Started with Google Cloud Pub/Sub](https://console.cloud.google.com/cloudpubsub?tutorial=pubsub_quickstart).
 
-## Step
+### Step
 
 1. Define the Google Cloud Pub/Sub sink connector with a YAML file and save it as `sink-sample.yaml`.
 
@@ -351,7 +357,3 @@ This example describes how to create a Google Cloud Pub/Sub sink connector for a
     ```
 
     After that, you can produce and consume messages using the Google Cloud Pub/Sub sink connector between Pulsar and Google Cloud Pub/Sub.
-
-@@@
-
-:::
