@@ -9,9 +9,9 @@ The [Google Cloud Pub/Sub](https://cloud.google.com/pubsub) sink connector pulls
 
 # How to get
 
-::: tabs
+This section describes how to build the Google Cloud Pub/Sub sink connector.
 
-@@@ Function Worker
+## Work with Function Worker
 
 You can get the Google Cloud Pub/Sub sink connector using one of the following methods if you use [Pulsar Function Worker](https://pulsar.apache.org/docs/en/functions-worker/) to run connectors in a cluster.
 
@@ -40,17 +40,11 @@ To build the Google Cloud Pub/Sub sink connector from the source code, follow th
      pulsar-io-google-pubsub-{{connector:version}}.nar
      ```
 
-@@@
-
-@@@ Function Mesh
+## Work with Function Mesh
 
 You can pull the Google Cloud Pub/Sub sink connector Docker image from the [Docker Hub](https://hub.docker.com/r/streamnative/pulsar-io-google-pubsub) if you use [Function Mesh](https://functionmesh.io/docs/connectors/run-connector) to run the connector.
 
-@@@
-
-:::
-
-# How to configure
+# How to configure 
 
 Before using the Google Cloud Pub/Sub sink connector, you need to configure it. This table lists the properties and the descriptions.
 
@@ -75,9 +69,7 @@ Before using the Google Cloud Pub/Sub sink connector, you need to configure it. 
 >
 > For more information about Google Cloud Pub/Sub API permissions, see [Google Cloud Pub/Sub API permissions: Access control](https://cloud.google.com/pubsub/docs/access-control).
 
-::: tabs
-
-@@@ Function Worker
+## Work with Function Worker
 
 You can create a configuration file (JSON or YAML) to set the properties if you use [Pulsar Function Worker](https://pulsar.apache.org/docs/en/functions-worker/) to run connectors in a cluster.
 
@@ -119,9 +111,7 @@ You can create a configuration file (JSON or YAML) to set the properties if you 
       pubsubTopicId: test-google-pubsub-sink
     ```
 
-@@@
-
-@@@ Function Mesh
+## Work with Function Mesh
 
 You can create a [CustomResourceDefinitions (CRD)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to create a Google Cloud Pub/Sub sink connector. Using CRD makes Function Mesh naturally integrate with the Kubernetes ecosystem. For more information about Pulsar sink CRD configurations, see [sink CRD configurations](https://functionmesh.io/docs/connectors/io-crd-config/sink-crd-config).
 
@@ -159,10 +149,6 @@ spec:
   autoAck: true
 ```
 
-@@@
-
-:::
-
 # How to use
 
 You can use the Google Cloud Pub/Sub sink connector with Function Worker or Function Mesh.
@@ -174,7 +160,6 @@ You can use the Google Cloud Pub/Sub sink connector as a non built-in connector 
 ::: tabs
 
 @@@ Use it as non built-in connector
-
 
 If you already have a Pulsar cluster, you can use the Google Cloud Pub/Sub sink connector as a non built-in connector directly.
 

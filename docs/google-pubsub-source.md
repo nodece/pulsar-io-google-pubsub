@@ -9,14 +9,15 @@ The [Google Cloud Pub/Sub](https://cloud.google.com/pubsub) source connector fee
 
 # How to get
 
-::: tabs
+This section describes how to build the Google Cloud Pub/Sub source connector.
 
-@@@ Function Worker
+## Work with Function Worker
 
 You can get the Google Cloud Pub/Sub source connector using one of the following methods if you use [Pulsar Function Worker](https://pulsar.apache.org/docs/en/functions-worker/) to run connectors in a cluster.
 
-Download the NAR package of the connector from the [download page](https://github.com/streamnative/pulsar-io-google-pubsub/releases/download/v{{connector:version}}/pulsar-io-google-pubsub-{{connector:version}}.nar).
-Build the connector from the source code.
+- Download the NAR package of the connector from the [download page](https://github.com/streamnative/pulsar-io-google-pubsub/releases/download/v{{connector:version}}/pulsar-io-google-pubsub-{{connector:version}}.nar).
+
+- Build the connector from the source code.
 
 To build the Google Cloud Pub/Sub source connector from the source code, follow these steps.
 
@@ -39,15 +40,9 @@ To build the Google Cloud Pub/Sub source connector from the source code, follow 
      pulsar-io-google-pubsub-{{connector:version}}.nar
      ```
 
-@@@
-
-@@@ Function Mesh
+## Work with Function Mesh
 
 You can pull the Google Cloud Pub/Sub source connector Docker image from [the Docker Hub](https://hub.docker.com/r/streamnative/pulsar-io-google-pubsub) if you use [Function Mesh](https://functionmesh.io/docs/connectors/run-connector) to run the connector.
-
-@@@
-
-:::
 
 # How to configure
 
@@ -75,9 +70,7 @@ Before using the Google Cloud Pub/Sub source connector, you need to configure it
 > 
 > For more information about Google Cloud Pub/Sub API permissions, see [Google Cloud Pub/Sub API permissions: Access control](https://cloud.google.com/pubsub/docs/access-control).
 
-::: tabs
-
-@@@ Function Worker
+## Work with Function Worker
 
 You can create a configuration file (JSON or YAML) to set the properties if you use [Pulsar Function Worker](https://pulsar.apache.org/docs/en/functions-worker/) to run connectors in a cluster.
 
@@ -115,9 +108,7 @@ You can create a configuration file (JSON or YAML) to set the properties if you 
       pubsubTopicId: test-pubsub-source
     ```
 
-@@@
-
-@@@ Function Mesh
+## Work with Function Mesh
 
 You can create a [CustomResourceDefinitions (CRD)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to create a Google Cloud Pub/Sub source connector. Using CRD makes Function Mesh naturally integrate with the Kubernetes ecosystem. For more information about Pulsar source CRD configurations, see [source CRD configurations](https://functionmesh.io/docs/connectors/io-crd-config/source-crd-config).
 
@@ -153,10 +144,6 @@ spec:
     jar: connectors/pulsar-io-google-pubsub-{{connector:version}}.nar
   clusterName: test-pulsar
 ```
-
-@@@
-
-:::
 
 # How to use
 
@@ -263,10 +250,6 @@ This example explains how to create a Google Cloud Pub/Sub source connector in a
     PULSAR_HOME/bin/pulsar-admin sources sources create \
     --source-config-file <google-pubsub-source-config.yaml>
     ```
-
-@@@
-
-:::
 
 ## Work with Function Mesh
 
