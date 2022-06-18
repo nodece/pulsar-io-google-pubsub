@@ -23,7 +23,7 @@ import com.google.protobuf.DynamicMessage;
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pulsar.client.api.schema.GenericRecord;
+import org.apache.pulsar.client.api.schema.GenericObject;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.SinkContext;
@@ -32,7 +32,7 @@ import org.apache.pulsar.io.core.SinkContext;
  * PubsubSink feed data from Pulsar into Google Cloud Pub/Sub.
  */
 @Slf4j
-public class PubsubSink extends PubsubConnector implements Sink<GenericRecord> {
+public class PubsubSink extends PubsubConnector implements Sink<GenericObject> {
     private SinkContext sinkContext;
     private PubsubPublisher publisher;
     private static final String METRICS_TOTAL_SUCCESS = "_pubsub_sink_total_success_";
@@ -46,7 +46,7 @@ public class PubsubSink extends PubsubConnector implements Sink<GenericRecord> {
     }
 
     @Override
-    public void write(Record<GenericRecord> record) throws Exception {
+    public void write(Record<GenericObject> record) throws Exception {
         Object data = null;
         if (record.getSchema() == null) {
             if (record.getMessage().isPresent()) {
@@ -89,14 +89,14 @@ public class PubsubSink extends PubsubConnector implements Sink<GenericRecord> {
         });
     }
 
-    private void success(Record<GenericRecord> record) {
+    private void success(Record<GenericObject> record) {
         record.ack();
         if (sinkContext != null) {
             sinkContext.recordMetric(METRICS_TOTAL_SUCCESS, 1);
         }
     }
 
-    private void fail(Record<GenericRecord> record) {
+    private void fail(Record<GenericObject> record) {
         record.fail();
         if (sinkContext != null) {
             sinkContext.recordMetric(METRICS_TOTAL_FAILURE, 1);

@@ -18,11 +18,11 @@
  */
 package org.apache.pulsar.ecosystem.io.pubsub;
 
-
 import com.google.pubsub.v1.PubsubMessage;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Data;
+import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.functions.api.Record;
 
 /**
@@ -65,5 +65,10 @@ public class PubsubRecord implements Record<byte[]> {
     @Override
     public Optional<String> getDestinationTopic() {
         return Optional.of(this.destination);
+    }
+
+    @Override
+    public Schema<byte[]> getSchema() {
+        return Schema.BYTES;
     }
 }
