@@ -20,6 +20,7 @@ package org.apache.pulsar.ecosystem.io.pubsub.testdata;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
@@ -28,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class User {
-    String name;
-    int age;
+    String key;
 }

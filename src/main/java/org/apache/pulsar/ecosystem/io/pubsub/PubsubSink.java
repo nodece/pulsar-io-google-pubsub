@@ -19,8 +19,6 @@
 package org.apache.pulsar.ecosystem.io.pubsub;
 
 import com.google.api.core.ApiFutureCallback;
-import com.google.protobuf.DynamicMessage;
-import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.client.api.schema.GenericObject;
@@ -47,39 +45,11 @@ public class PubsubSink extends PubsubConnector implements Sink<GenericObject> {
 
     @Override
     public void write(Record<GenericObject> record) throws Exception {
-        Object data = null;
-        if (record.getSchema() == null) {
-            if (record.getMessage().isPresent()) {
-                data = record.getMessage().get().getData();
-            }
-        } else {
-            switch (record.getValue().getSchemaType()) {
-                case JSON:
-                case AVRO:
-                    data = record.getValue().getNativeObject().toString();
-                    break;
-                case PROTOBUF:
-                case PROTOBUF_NATIVE:
-                    DynamicMessage dynamicMessage = (DynamicMessage) record.getValue().getNativeObject();
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    dynamicMessage.writeTo(out);
-                    data = out.toByteArray();
-                    break;
-                default:
-                    data = record.getValue().getNativeObject();
-            }
-        }
-
-        if (data == null) {
-            record.ack();
-            return;
-        }
-
-        this.publisher.send(data, new ApiFutureCallback<String>() {
+        this.publisher.send(record, new ApiFutureCallback<String>() {
             @Override
             public void onFailure(Throwable throwable) {
                 fail(record);
-                log.error(throwable.getMessage());
+                log.error("Failed to sink the record", throwable);
             }
 
             @Override

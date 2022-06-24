@@ -18,8 +18,10 @@
  */
 package org.apache.pulsar.ecosystem.io.pubsub.integrations;
 
-import com.google.api.core.ApiFutureCallback;
+import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.PubsubMessage;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -74,17 +76,9 @@ public class PubsubSourceIntegrationTest {
         Thread.sleep(3 * 1000);
 
         for (int i = 0; i < SEND_COUNT; i++) {
-            publisher.send(MSG + i, new ApiFutureCallback<String>() {
-                @Override
-                public void onFailure(Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-
-                @Override
-                public void onSuccess(String s) {
-                   // noop
-                }
-            });
+            String data = MSG + i;
+            publisher.getPublisher().publish(PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(data)).build())
+                    .get();
         }
         publisher.shutdown();
         System.out.println("send data to Google Cloud Pub/Sub successfully");
@@ -105,8 +99,8 @@ public class PubsubSourceIntegrationTest {
         int recordsNumber = 0;
         Message<GenericRecord> msg = pulsarConsumer.receive(2, TimeUnit.SECONDS);
         while (msg != null) {
-            String pubsubMessage = (String) PubsubPublisher.deserializeByteArray(msg.getData());
-            Assert.assertTrue(pubsubMessage.contains(MSG));
+            String pubsubMessage = new String(msg.getData(), StandardCharsets.UTF_8);
+            Assert.assertTrue(pubsubMessage.startsWith(MSG));
             pulsarConsumer.acknowledge(msg);
             recordsNumber++;
             msg = pulsarConsumer.receive(2, TimeUnit.SECONDS);
