@@ -37,17 +37,19 @@
   <description>It is an Apache Pulsar io connector for Google Cloud Pub/Sub</description>
 
   <properties>
-    <java.version>1.8</java.version>
+    <java.version>17</java.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <redirectTestOutputToFile>true</redirectTestOutputToFile>
-    <spotbugs-annotations.version>3.1.8</spotbugs-annotations.version>
+    <spotbugs-annotations.version>4.2.2</spotbugs-annotations.version>
     <testRetryCount>2</testRetryCount>
 
     <!-- connector dependencies -->
     <jackson-databind.version>2.13.2.1</jackson-databind.version>
-    <lombok.version>1.18.20</lombok.version>
-    <pulsar.version>2.8.0.8</pulsar.version>
+    <lombok.version>1.18.22</lombok.version>
+    <pulsar.version>2.11.0.0-rc5</pulsar.version>
     <google-cloud.version>20.9.0</google-cloud.version>
     <avro.version>1.10.2</avro.version>
     <protobuf.version>3.17.3</protobuf.version>
@@ -63,11 +65,11 @@
     <!-- build plugin dependencies -->
     <license.plugin.version>3.0</license.plugin.version>
     <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
-    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-    <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
+    <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
     <nifi.nar.plugin.version>1.2.0</nifi.nar.plugin.version>
     <puppycrawl.checkstyle.version>6.19</puppycrawl.checkstyle.version>
-    <spotbugs-maven-plugin.version>3.1.8</spotbugs-maven-plugin.version>
+    <spotbugs-maven-plugin.version>4.2.2</spotbugs-maven-plugin.version>
   </properties>
 
   <licenses>
@@ -269,6 +271,10 @@
             <reuseForks>false</reuseForks>
             <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
             <rerunFailingTestsCount>${testRetryCount}</rerunFailingTestsCount>
+            <argLine>
+              --add-opens java.base/java.lang=ALL-UNNAMED
+              --add-opens=java.xml/com.sun.org.apache.xpath.internal=ALL-UNNAMED
+            </argLine>
           </configuration>
         </plugin>
         <!-- package -->
@@ -368,7 +374,7 @@
     </pluginManagement>
 
     <plugins>
-      <!-- compile --> 
+      <!-- compile -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
