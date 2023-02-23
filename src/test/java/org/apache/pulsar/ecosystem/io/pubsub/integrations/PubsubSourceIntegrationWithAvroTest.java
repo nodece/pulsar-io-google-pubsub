@@ -18,13 +18,14 @@
  */
 package org.apache.pulsar.ecosystem.io.pubsub.integrations;
 
-import com.google.api.core.ApiFutureCallback;
-import com.google.gson.Gson;
+import com.google.pubsub.v1.PubsubMessage;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.Cleanup;
+import org.apache.avro.generic.GenericData;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClient;
@@ -33,7 +34,7 @@ import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.schema.GenericRecord;
 import org.apache.pulsar.ecosystem.io.pubsub.PubsubConnectorConfig;
 import org.apache.pulsar.ecosystem.io.pubsub.PubsubPublisher;
-import org.apache.pulsar.ecosystem.io.pubsub.testdata.User;
+import org.apache.pulsar.ecosystem.io.pubsub.util.AvroUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -84,19 +85,14 @@ public class PubsubSourceIntegrationWithAvroTest {
         // wait for the subscriber to perform the subscription operation.
         Thread.sleep(3 * 1000);
 
-        Gson gson = new Gson();
-        for (int i = 0; i < SEND_COUNT; i++) {
-            publisher.send(gson.toJson(User.builder().name(MSG + i).build()), new ApiFutureCallback<String>() {
-                @Override
-                public void onFailure(Throwable throwable) {
-                    throwable.printStackTrace();
-                }
+        org.apache.avro.Schema schema = AvroUtils.parseSchemaString(pubsubSchemaDefinition);
 
-                @Override
-                public void onSuccess(String s) {
-                    // noop
-                }
-            });
+        for (int i = 0; i < SEND_COUNT; i++) {
+            org.apache.avro.generic.GenericRecord genericRecord = new GenericData.Record(schema);
+            genericRecord.put("key", MSG + i);
+            publisher.getPublisher()
+                    .publish(PubsubMessage.newBuilder().setData(publisher.serializeAvroSchema(genericRecord)).build())
+                    .get();
         }
         publisher.shutdown();
         System.out.println("send data to Google Cloud Pub/Sub successfully");
@@ -117,7 +113,7 @@ public class PubsubSourceIntegrationWithAvroTest {
         int recordsNumber = 0;
         Message<GenericRecord> msg = pulsarConsumer.receive(2, TimeUnit.SECONDS);
         while (msg != null) {
-            Assert.assertTrue(new String(msg.getData()).contains(MSG));
+            Assert.assertTrue(new String(msg.getData(), StandardCharsets.UTF_8).contains(MSG));
             pulsarConsumer.acknowledge(msg);
             recordsNumber++;
             msg = pulsarConsumer.receive(2, TimeUnit.SECONDS);

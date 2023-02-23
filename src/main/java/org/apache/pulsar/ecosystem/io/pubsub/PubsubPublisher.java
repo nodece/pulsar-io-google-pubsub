@@ -27,6 +27,7 @@ import com.google.cloud.pubsub.v1.TopicAdminClient;
 import com.google.cloud.pubsub.v1.TopicAdminSettings;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.DynamicMessage;
 import com.google.pubsub.v1.Encoding;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.Schema;
@@ -36,14 +37,22 @@ import com.google.pubsub.v1.TopicName;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.io.JsonDecoder;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.pulsar.client.api.schema.GenericObject;
 import org.apache.pulsar.ecosystem.io.pubsub.util.AvroUtils;
 import org.apache.pulsar.ecosystem.io.pubsub.util.ProtobufUtils;
+import org.apache.pulsar.functions.api.Record;
 
 
 /**
@@ -84,7 +93,9 @@ public class PubsubPublisher {
         try (TopicAdminClient topicAdminClient = TopicAdminClient.create(topicAdminSettings)) {
             try {
                 topic = topicAdminClient.getTopic(topicName);
-                schema = config.getOrCreateSchema();
+                if (!"".equals(config.getPubsubSchemaId())) {
+                    schema = config.getOrCreateSchema();
+                }
             } catch (Exception ex) {
                 if (ex instanceof NotFoundException) {
                     Topic.Builder topicBuilder = Topic.newBuilder();
@@ -134,55 +145,110 @@ public class PubsubPublisher {
         return new PubsubPublisher(publishBuilder.build(), topic, schemaType, messageSchema);
     }
 
-    public static byte[] serializeObject(Object obj) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ObjectOutputStream os = new ObjectOutputStream(out);
-        os.writeObject(obj);
-        return out.toByteArray();
-    }
-
-    public static Object deserializeByteArray(byte[] data) throws IOException, ClassNotFoundException {
-        ByteArrayInputStream in = new ByteArrayInputStream(data);
-        ObjectInputStream is = new ObjectInputStream(in);
-        return is.readObject();
-    }
-
-    public void send(Object data, ApiFutureCallback<String> callback) throws Exception {
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-
-        if (this.schemaType != null && this.messageSchema != null) {
-            if (this.schemaType == Schema.Type.AVRO) {
-                Encoder encoder;
-                org.apache.avro.Schema schema = (org.apache.avro.Schema) this.messageSchema;
-                Encoding encoding = this.topic.getSchemaSettings().getEncoding();
-                switch (encoding) {
-//                    case BINARY:  // TODO: BINARY not supported
-//                        encoder = EncoderFactory.get().directBinaryEncoder(byteStream, null);
-//                        encoder.writeBytes(data);
-//                        encoder.flush();
-//                        break;
-                    case JSON:
-                        encoder = EncoderFactory.get().jsonEncoder(schema, byteStream);
-                        encoder.writeString((String) data);
-                        encoder.flush();
-                        break;
-                    default:
-                        throw new Exception("not support avro schema with " + encoding);
-                }
-            } else {
-                throw new Exception("not support schema type: " + this.schemaType);
-            }
-        } else {
-            // If the schema is not configured, we will convert this object to byte[]
-            byteStream.write(serializeObject(data));
-            byteStream.flush();
+    public void send(Record<GenericObject> record, ApiFutureCallback<String> callback) throws Exception {
+        ByteString data = recordToByteString(record);
+        if (data == null) {
+            log.warn("skip the empty record {}", record);
+            callback.onSuccess(null);
+            return;
         }
-
-        PubsubMessage message =
-                PubsubMessage.newBuilder().setData(ByteString.copyFrom(byteStream.toByteArray())).build();
+        PubsubMessage message = PubsubMessage.newBuilder().setData(data).build();
         ApiFuture<String> apiFuture = publisher.publish(message);
         if (callback != null) {
             ApiFutures.addCallback(apiFuture, callback, MoreExecutors.directExecutor());
+        }
+    }
+
+    private boolean hasSchema() {
+        return this.schemaType != null && this.messageSchema != null;
+    }
+
+    public ByteString serializeAvroSchema(GenericRecord record) throws IOException {
+        Encoding encoding = this.topic.getSchemaSettings().getEncoding();
+        switch (schemaType) {
+            case AVRO:
+                switch (encoding) {
+                    case BINARY:
+                        return ByteString.copyFrom(serializeAvroWithBinaryEncoder(record,
+                                (org.apache.avro.Schema) this.messageSchema));
+                    case JSON:
+                        return ByteString.copyFrom(serializeAvroJsonEncoder(record,
+                                (org.apache.avro.Schema) this.messageSchema));
+                    default:
+                        throw new RuntimeException("not support encoding type: " + encoding);
+                }
+            default:
+                throw new RuntimeException("not support encoding type: " + encoding);
+        }
+    }
+
+    public static byte[] serializeAvroWithBinaryEncoder(GenericRecord record, org.apache.avro.Schema schema)
+            throws IOException {
+        SpecificDatumWriter<GenericRecord> datumWriter = new SpecificDatumWriter<>(schema);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        BinaryEncoder binaryEncoder = new EncoderFactory().binaryEncoder(byteArrayOutputStream, null);
+        datumWriter.write(record, binaryEncoder);
+        binaryEncoder.flush();
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    public static byte[] serializeAvroJsonEncoder(GenericRecord record, org.apache.avro.Schema schema)
+            throws IOException {
+        SpecificDatumWriter<GenericRecord> datumWriter = new SpecificDatumWriter<>(schema);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Encoder jsonEncoder = EncoderFactory.get().jsonEncoder(schema, byteArrayOutputStream);
+        datumWriter.write(record, jsonEncoder);
+        jsonEncoder.flush();
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    public static GenericRecord deserializeAvroWithBinaryEncoder(byte[] recordBytes, org.apache.avro.Schema schema)
+            throws IOException {
+        DatumReader<GenericRecord> datumReader = new SpecificDatumReader<>(schema);
+        ByteArrayInputStream stream = new ByteArrayInputStream(recordBytes);
+        BinaryDecoder binaryDecoder = new DecoderFactory().binaryDecoder(stream, null);
+        return datumReader.read(null, binaryDecoder);
+    }
+
+    public static GenericRecord deserializeAvroWithJsonEncoder(byte[] recordBytes, org.apache.avro.Schema schema)
+            throws IOException {
+        DatumReader<GenericRecord> datumReader = new SpecificDatumReader<>(schema);
+        ByteArrayInputStream stream = new ByteArrayInputStream(recordBytes);
+        JsonDecoder jsonDecoder = new DecoderFactory().jsonDecoder(schema, stream);
+        return datumReader.read(null, jsonDecoder);
+    }
+
+    ByteString recordToByteString(Record<GenericObject> record)
+            throws IOException {
+        if (record.getSchema() == null) {
+            if (record.getMessage().isPresent()) {
+                return ByteString.copyFrom(record.getMessage().get().getData());
+            } else {
+                return null;
+            }
+        }
+
+        switch (record.getValue().getSchemaType()) {
+            case PROTOBUF:
+            case PROTOBUF_NATIVE:
+                if (hasSchema()) {
+                    throw new RuntimeException("not support convert data of PROTOBUF/PROTOBUF schema type");
+                }
+                DynamicMessage dynamicMessage = (DynamicMessage) record.getValue().getNativeObject();
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                dynamicMessage.writeTo(out);
+                return ByteString.copyFrom(out.toByteArray());
+            case BYTES:
+                return ByteString.copyFrom((byte[]) record.getValue().getNativeObject());
+            case AVRO:
+                GenericRecord genericRecord = (GenericRecord) record.getValue().getNativeObject();
+                if (hasSchema()) {
+                    return serializeAvroSchema(genericRecord);
+                }
+                return ByteString.copyFromUtf8(String.valueOf(record.getValue().getNativeObject()));
+            default:
+                String data = String.valueOf(record.getValue().getNativeObject());
+                return ByteString.copyFromUtf8(data);
         }
     }
 
@@ -190,7 +256,8 @@ public class PubsubPublisher {
         this.publisher.awaitTermination(3, TimeUnit.SECONDS);
         this.publisher.shutdown();
     }
+
+    public Publisher getPublisher() {
+        return this.publisher;
+    }
 }
-
-
-
