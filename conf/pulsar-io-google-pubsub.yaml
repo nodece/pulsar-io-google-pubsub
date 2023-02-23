@@ -25,6 +25,8 @@ configs:
   gcloudEndpoint: ""
 
   # pubsubCredential is Google Cloud credential string.
+  # Recommend set the GOOGLE_APPLICATION_CREDENTIALS environment variable for authentication,
+  # see https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable
   #
   # This field is optional.
   #

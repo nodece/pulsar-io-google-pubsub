@@ -84,7 +84,9 @@ public class PubsubConnectorConfig implements Serializable {
     @FieldDoc(
             required = false,
             defaultValue = "",
-            help = "pubsubCredential is Google Cloud credential string"
+            help = "pubsubCredential is Google Cloud credential string, recommend "
+                    + "set the GOOGLE_APPLICATION_CREDENTIALS environment variable for authentication, see "
+                    + "https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable"
     )
     private String pubsubCredential = "";
 

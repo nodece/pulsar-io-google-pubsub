@@ -29,12 +29,15 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.ecosystem.io.pubsub.PubsubConnectorConfig;
+import org.apache.pulsar.ecosystem.io.pubsub.PubsubPublisher;
 import org.apache.pulsar.ecosystem.io.pubsub.PubsubSink;
 import org.apache.pulsar.ecosystem.io.pubsub.testdata.User;
+import org.apache.pulsar.ecosystem.io.pubsub.util.AvroUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -64,10 +67,16 @@ public class PubsubSinkWithAvroIntegrationTest {
         properties.put("pubsubCredential", credential);
         properties.put("pubsubTopicId", topicId);
 
+        String avroSchemaString =
+                "{\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"key\",\"type\":\"string\"}]}";
+        org.apache.avro.Schema schema = AvroUtils.parseSchemaString(avroSchemaString);
+
         pubsubSubscriber = PubsubConnectorConfig.load(properties).newSubscriber(((pubsubMessage, ackReplyConsumer) -> {
             try {
-                Object data = pubsubMessage.getData().toByteArray();
-                queue.put(data);
+                GenericRecord genericRecord =
+                        PubsubPublisher.deserializeAvroWithJsonEncoder(pubsubMessage.getData().toByteArray(), schema);
+                Assert.assertTrue(genericRecord.get("key").toString().startsWith(MSG));
+                queue.put(genericRecord);
                 ackReplyConsumer.ack();
             } catch (Exception e) {
                 ackReplyConsumer.nack();
@@ -106,7 +115,7 @@ public class PubsubSinkWithAvroIntegrationTest {
                 .create();
 
         for (int i = 0; i < SEND_COUNT; i++) {
-            pulsarProducer.send(User.builder().name(MSG + i).build());
+            pulsarProducer.send(User.builder().key(MSG + i).build());
         }
 
         System.out.println("send data to pulsar successfully");
