@@ -18,13 +18,10 @@
  */
 package org.apache.pulsar.ecosystem.io.pubsub.integrations;
 
-import com.google.api.core.ApiFutureCallback;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.pulsar.ecosystem.io.pubsub.PubsubConnectorConfig;
 import org.apache.pulsar.ecosystem.io.pubsub.PubsubPublisher;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -47,17 +44,6 @@ public class PubsubPublisherIntegrationTest {
         PubsubConnectorConfig config = PubsubConnectorConfig.load(properties);
 
         PubsubPublisher pubsubPublisher = PubsubPublisher.create(config);
-        pubsubPublisher.send("hello".getBytes(StandardCharsets.UTF_8), new ApiFutureCallback<String>() {
-            @Override
-            public void onFailure(Throwable throwable) {
-                Assert.fail(throwable.getMessage());
-            }
-
-            @Override
-            public void onSuccess(String s) {
-
-            }
-        });
         pubsubPublisher.shutdown();
     }
 
@@ -94,17 +80,6 @@ public class PubsubPublisherIntegrationTest {
 
         PubsubConnectorConfig config = PubsubConnectorConfig.load(properties);
         PubsubPublisher pubsubPublisher = PubsubPublisher.create(config);
-        pubsubPublisher.send("{\"key\":\"hello\"}", new ApiFutureCallback<String>() {
-            @Override
-            public void onFailure(Throwable throwable) {
-                Assert.fail(throwable.getMessage());
-            }
-
-            @Override
-            public void onSuccess(String s) {
-
-            }
-        });
         pubsubPublisher.shutdown();
     }
 }

@@ -33,7 +33,6 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.ecosystem.io.pubsub.PubsubConnectorConfig;
-import org.apache.pulsar.ecosystem.io.pubsub.PubsubPublisher;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,7 +40,7 @@ import org.junit.Test;
  * Integration tests for {@link org.apache.pulsar.ecosystem.io.pubsub.PubsubSink}.
  */
 @Slf4j
-public class PubsubSinkIntegrationTest {
+public class PubsubSinkWithStringSchemaIntegrationTest {
     private static final String PULSAR_TOPIC = "test-pubsub-sink-topic";
     private static final String PULSAR_PRODUCER_NAME = "test-pubsub-sink-producer";
     private static final String MSG = "hello-message-";
@@ -65,8 +64,8 @@ public class PubsubSinkIntegrationTest {
 
         pubsubSubscriber = PubsubConnectorConfig.load(properties).newSubscriber(((pubsubMessage, ackReplyConsumer) -> {
             try {
-                String data = (String) PubsubPublisher.deserializeByteArray(pubsubMessage.getData().toByteArray());
-                Assert.assertTrue(data.contains(MSG));
+                String data = pubsubMessage.getData().toStringUtf8();
+                Assert.assertTrue(data.startsWith(MSG));
                 queue.put(data);
                 ackReplyConsumer.ack();
             } catch (Exception e) {
